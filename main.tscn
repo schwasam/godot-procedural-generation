@@ -1,0 +1,93 @@
+[gd_scene load_steps=14 format=3 uid="uid://31rr45fx7ppm"]
+
+[ext_resource type="Script" path="res://procedural_generation/TerrainGeneration.gd" id="1_udg6w"]
+[ext_resource type="PackedScene" uid="uid://cf1pwgl0y0mi6" path="res://player/Player.tscn" id="2_hq8qc"]
+[ext_resource type="Script" path="res://procedural_generation/SpawnableObject.gd" id="2_m4xu3"]
+[ext_resource type="PackedScene" uid="uid://dju443moxaprb" path="res://models/tree/Tree.tscn" id="3_wh36w"]
+[ext_resource type="PackedScene" uid="uid://crlk3u335xyr6" path="res://models/rock/Rock.tscn" id="4_6nlq8"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_2a8iq"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_f47va"]
+sky_material = SubResource("ProceduralSkyMaterial_2a8iq")
+
+[sub_resource type="Environment" id="Environment_026yj"]
+background_mode = 2
+sky = SubResource("Sky_f47va")
+tonemap_mode = 2
+ssao_enabled = true
+glow_enabled = true
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.02
+volumetric_fog_emission = Color(0.368627, 0.819608, 1, 1)
+adjustment_enabled = true
+adjustment_contrast = 1.1
+adjustment_saturation = 1.1
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_pgccl"]
+noise_type = 0
+seed = 2
+frequency = 0.004
+
+[sub_resource type="Curve" id="Curve_fiwca"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.100575, 0), 0.0, 0.0, 0, 0, Vector2(0.198276, 0.247753), 0.0, 0.0, 0, 0, Vector2(1, 1), 3.62665e-07, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_m2olj"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ijx0r"]
+albedo_color = Color(0, 0.513726, 0.658824, 1)
+roughness = 0.32
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_gix5x"]
+geometry_parsed_geometry_type = 2
+geometry_source_geometry_mode = 2
+geometry_source_group_name = &"NavSource"
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_026yj")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 216, 0)
+shadow_enabled = true
+
+[node name="Camera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 60, 60)
+visible = false
+current = true
+
+[node name="Player" parent="." instance=ExtResource("2_hq8qc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 100, 0)
+
+[node name="TerrainGeneration" type="Node" parent="."]
+script = ExtResource("1_udg6w")
+noise = SubResource("FastNoiseLite_pgccl")
+elevation_curve = SubResource("Curve_fiwca")
+water_level = 0.2
+
+[node name="SpawnableObject_Tree" type="Node" parent="TerrainGeneration"]
+script = ExtResource("2_m4xu3")
+scenes_to_spawn = Array[PackedScene]([ExtResource("3_wh36w")])
+spawn_count = 500
+max_scale = 1.4
+
+[node name="SpawnableObject_Rock" type="Node" parent="TerrainGeneration"]
+script = ExtResource("2_m4xu3")
+scenes_to_spawn = Array[PackedScene]([ExtResource("4_6nlq8")])
+spawn_count = 1000
+max_scale = 2.5
+
+[node name="Water" type="MeshInstance3D" parent="TerrainGeneration"]
+unique_name_in_owner = true
+transform = Transform3D(1000, 0, 0, 0, 1000, 0, 0, 0, 1000, 0, 0, 0)
+mesh = SubResource("PlaneMesh_m2olj")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("StandardMaterial3D_ijx0r")
+
+[node name="NavigationRegion" type="NavigationRegion3D" parent="TerrainGeneration"]
+unique_name_in_owner = true
+navigation_mesh = SubResource("NavigationMesh_gix5x")
